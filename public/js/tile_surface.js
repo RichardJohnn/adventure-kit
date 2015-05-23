@@ -27,11 +27,14 @@ TileSurface.prototype.initCanvas = function () {
 
   this.container.appendChild(this.canvas);
   this.ctx = this.canvas.getContext('2d');
+  this.hScale = this.WIDTH / this.TILE_SIZE;
+  this.vScale = this.HEIGHT / this.TILE_SIZE;
+  this.ctx.scale(this.hScale, this.vScale);
 };
 
 TileSurface.prototype.initBackground = function () {
   this.ctx.fillStyle = "#000000";
-  this.ctx.fillRect(0, 0, this.WIDTH, this.HEIGHT);
+  this.ctx.fillRect(0, 0, this.hScale, this.vScale);
 };
 
 TileSurface.prototype.initTiles = function () {
@@ -54,7 +57,6 @@ TileSurface.prototype.getTileCoordinates = function (ev) {
   var absY = ev.clientY;
   var x = absX - elRect.left;
   var y = absY - elRect.top;
-
   var tileX = Math.floor(x / this.TILE_SIZE);
   var tileY = Math.floor(y / this.TILE_SIZE);
 
