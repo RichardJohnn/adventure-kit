@@ -1,6 +1,21 @@
+let React = require('react');
+
 import Pixel from './pixel';
 import TileSurface from './tile_surface';
 import ColorPicker from './color_picker';
+
+let DrawSurfaceView = React.createClass({
+  render: function () {
+    return (
+        <div id="draw">
+          <div id="render"></div>
+          <input type="color" id="flat-color" class="color">
+          <input type="color" id="primary-color" class="color">
+          <input type="color" id="secondary-color" class="color">
+        </div>
+    );
+  }
+});
 
 class DrawSurface extends TileSurface {
   constructor (container, params={}) {
