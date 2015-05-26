@@ -43448,7 +43448,162 @@ var ColorPicker = (function () {
 exports['default'] = ColorPicker;
 module.exports = exports['default'];
 
-},{"./lib/spectrum":98,"jquery":95}],97:[function(require,module,exports){
+},{"./lib/spectrum":102,"jquery":95}],97:[function(require,module,exports){
+'use strict';
+
+var angular = require('angular');
+var $ = require('jquery');
+
+var app = angular.module('app');
+
+exports = module.exports = function ($scope) {
+  $scope.WIDTH = 512;
+  $scope.HEIGHT = 512;
+
+  $scope.initCanvas = function (el) {
+    $scope.BG_TILE_SIZE = 8;
+
+    var $el = $(el);
+    $scope.bgCtx = $el.find('#bg-canvas')[0].getContext('2d');
+    $scope.drawCtx = $el.find('#draw-canvas')[0].getContext('2d');
+    $scope.overlayCtx = $el.find('#overlay-canvas')[0].getContext('2d');
+    console.log($scope.bgCtx);
+
+    var NUM_TILES_HORIZ = this.WIDTH / this.BG_TILE_SIZE;
+    var NUM_TILES_VERT = this.HEIGHT / this.BG_TILE_SIZE;
+
+    for (var i = 0; i < NUM_TILES_HORIZ; i++) {
+      for (var j = 0; j < NUM_TILES_VERT; j++) {
+        var x = i * this.BG_TILE_SIZE;
+        var y = j * this.BG_TILE_SIZE;
+
+        var fill = (i + j) % 2 == 0 ? '#999' : '#777';
+
+        this.bgCtx.fillStyle = fill;
+        this.bgCtx.fillRect(x, y, this.BG_TILE_SIZE, this.BG_TILE_SIZE);
+      }
+    }
+
+    this.isMouseDown = false;
+
+    var NUM_PIXELS_HORIZ = this.WIDTH / this.TILE_SIZE;
+    var NUM_PIXELS_VERT = this.HEIGHT / this.TILE_SIZE;
+    this.grid = [];
+
+    for (var x = 0; x < NUM_PIXELS_HORIZ; x++) {
+      this.grid[x] = [];
+
+      for (var y = 0; y < NUM_PIXELS_VERT; y++) {
+        this.grid[x].push(new Pixel(x, y));
+      }
+    }
+  };
+
+  $scope.mouseMoved = function (ev) {
+    var _getTileCoordinates = this.getTileCoordinates(ev);
+
+    var x = _getTileCoordinates.x;
+    var y = _getTileCoordinates.y;
+
+    var NUM_PIXELS = this.grid.length;
+
+    var currentPixel = this.grid[x][y];
+    if (!currentPixel.highlighted) {
+      var fillX = currentPixel.x * this.TILE_SIZE;
+      var fillY = currentPixel.y * this.TILE_SIZE;
+
+      this.overlayCtx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+      this.overlayCtx.fillRect(fillX, fillY, this.TILE_SIZE, this.TILE_SIZE);
+      currentPixel.highlighted = true;
+    }
+
+    this.clearHighlight(null, currentPixel);
+
+    if (this.isMouseDown) {
+      this.paintPixel(ev);
+    }
+  };
+
+  $scope.clearHighlight = function (ev) {
+    var NUM_PIXELS_HORIZ = this.WIDTH / this.TILE_SIZE;
+    var NUM_PIXELS_VERT = this.HEIGHT / this.TILE_SIZE;
+    for (var ix = 0; ix < NUM_PIXELS_HORIZ; ix++) {
+      for (var iy = 0; iy < NUM_PIXELS_VERT; iy++) {
+        var pixel = this.grid[ix][iy];
+        if (pixel === currentPixel) {
+          continue;
+        }
+
+        if (pixel.highlighted) {
+          var clrX = pixel.x * this.TILE_SIZE;
+          var clrY = pixel.y * this.TILE_SIZE;
+
+          this.overlayCtx.clearRect(clrX, clrY, this.TILE_SIZE, this.TILE_SIZE);
+          pixel.highlighted = false;
+        }
+      }
+    }
+  };
+
+  $scope.paintPixel = function (ev) {
+    this.isMouseDown = true;
+
+    var _getTileCoordinates2 = this.getTileCoordinates(ev);
+
+    var x = _getTileCoordinates2.x;
+    var y = _getTileCoordinates2.y;
+
+    var color = '#000000';
+    var pixel = this.grid[x][y];
+
+    var fillX = x * this.TILE_SIZE;
+    var fillY = y * this.TILE_SIZE;
+    this.drawCtx.fillStyle = color;
+    this.drawCtx.fillRect(fillX, fillY, this.TILE_SIZE, this.TILE_SIZE);
+    pixel.color = color;
+  };
+
+  $scope.setMouseUp = function (ev) {
+    this.isMouseDown = false;
+  };
+};
+
+},{"angular":3,"jquery":95}],98:[function(require,module,exports){
+'use strict';
+
+var angular = require('angular');
+
+var app = angular.module('app');
+
+app.controller('DrawCtrl', require('./draw'));
+
+},{"./draw":97,"angular":3}],99:[function(require,module,exports){
+'use strict';
+
+exports = module.exports = function () {
+  return {
+    restrict: 'E',
+    templateUrl: 'templates/directives/draw.html',
+    link: function link(scope, element, attrs) {
+      scope.initCanvas(element);
+      element.bind('mousemove', scope.mouseMoved);
+      element.bind('mouseout', scope.clearHighlight);
+      element.bind('mousedown', scope.paintPixel);
+      element.bind('mouseup', scope.setMouseUp);
+    }
+  };
+};
+
+},{}],100:[function(require,module,exports){
+'use strict';
+
+var angular = require('angular');
+
+var app = angular.module('app');
+
+app.directive('draw', require('./draw'));
+
+},{"./draw":99,"angular":3}],101:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -43486,150 +43641,22 @@ var DrawSurface = (function (_TileSurface) {
     _classCallCheck(this, DrawSurface);
 
     _get(Object.getPrototypeOf(DrawSurface.prototype), 'constructor', this).call(this, container, params);
-
-    this.BG_TILE_SIZE = params.bgTileSize || 8;
-    this.initBackground();
-    this.colorPicker = new _color_picker2['default']();
-
-    this.isMouseDown = false;
-    this.container.addEventListener('mousemove', this.mouseMoved.bind(this), false);
-    this.container.addEventListener('mouseout', this.clearHighlight.bind(this), false);
-    this.container.addEventListener('mousedown', this.paintPixel.bind(this), false);
-    this.container.addEventListener('mouseup', this.setMouseUp.bind(this), false);
   }
 
   _inherits(DrawSurface, _TileSurface);
 
   _createClass(DrawSurface, [{
-    key: 'initCanvas',
-    value: function initCanvas() {
-      this.bgCanvas = document.createElement('canvas');
-      this.bgCanvas.setAttribute('width', this.WIDTH);
-      this.bgCanvas.setAttribute('height', this.HEIGHT);
-      $(this.bgCanvas).addClass('draw');
-      this.container.appendChild(this.bgCanvas);
-
-      this.drawCanvas = document.createElement('canvas');
-      this.drawCanvas.setAttribute('width', this.WIDTH);
-      this.drawCanvas.setAttribute('height', this.HEIGHT);
-      $(this.drawCanvas).addClass('draw');
-      this.container.appendChild(this.drawCanvas);
-
-      this.overlayCanvas = document.createElement('canvas');
-      this.overlayCanvas.setAttribute('width', this.WIDTH);
-      this.overlayCanvas.setAttribute('height', this.HEIGHT);
-      $(this.overlayCanvas).addClass('draw');
-      this.container.appendChild(this.overlayCanvas);
-
-      this.bgCtx = this.bgCanvas.getContext('2d');
-      this.drawCtx = this.drawCanvas.getContext('2d');
-      this.overlayCtx = this.overlayCanvas.getContext('2d');
-    }
-  }, {
-    key: 'initBackground',
-    value: function initBackground() {
-      var NUM_TILES_HORIZ = this.WIDTH / this.BG_TILE_SIZE;
-      var NUM_TILES_VERT = this.HEIGHT / this.BG_TILE_SIZE;
-
-      for (var i = 0; i < NUM_TILES_HORIZ; i++) {
-        for (var j = 0; j < NUM_TILES_VERT; j++) {
-          var x = i * this.BG_TILE_SIZE;
-          var y = j * this.BG_TILE_SIZE;
-
-          var fill = (i + j) % 2 == 0 ? '#999' : '#777';
-
-          this.bgCtx.fillStyle = fill;
-          this.bgCtx.fillRect(x, y, this.BG_TILE_SIZE, this.BG_TILE_SIZE);
-        }
-      }
-    }
-  }, {
-    key: 'initTiles',
-    value: function initTiles() {
-      var NUM_PIXELS_HORIZ = this.WIDTH / this.TILE_SIZE;
-      var NUM_PIXELS_VERT = this.HEIGHT / this.TILE_SIZE;
-      this.grid = [];
-
-      for (var x = 0; x < NUM_PIXELS_HORIZ; x++) {
-        this.grid[x] = [];
-
-        for (var y = 0; y < NUM_PIXELS_VERT; y++) {
-          this.grid[x].push(new _pixel2['default'](x, y));
-        }
-      }
-    }
-  }, {
     key: 'mouseMoved',
-    value: function mouseMoved(ev) {
-      var _getTileCoordinates = this.getTileCoordinates(ev);
-
-      var x = _getTileCoordinates.x;
-      var y = _getTileCoordinates.y;
-
-      var NUM_PIXELS = this.grid.length;
-
-      var currentPixel = this.grid[x][y];
-      if (!currentPixel.highlighted) {
-        var fillX = currentPixel.x * this.TILE_SIZE;
-        var fillY = currentPixel.y * this.TILE_SIZE;
-
-        this.overlayCtx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-        this.overlayCtx.fillRect(fillX, fillY, this.TILE_SIZE, this.TILE_SIZE);
-        currentPixel.highlighted = true;
-      }
-
-      this.clearHighlight(null, currentPixel);
-
-      if (this.isMouseDown) {
-        this.paintPixel(ev);
-      }
-    }
+    value: function mouseMoved(ev) {}
   }, {
     key: 'clearHighlight',
-    value: function clearHighlight(ev, currentPixel) {
-      var NUM_PIXELS_HORIZ = this.WIDTH / this.TILE_SIZE;
-      var NUM_PIXELS_VERT = this.HEIGHT / this.TILE_SIZE;
-      for (var ix = 0; ix < NUM_PIXELS_HORIZ; ix++) {
-        for (var iy = 0; iy < NUM_PIXELS_VERT; iy++) {
-          var pixel = this.grid[ix][iy];
-          if (pixel === currentPixel) {
-            continue;
-          }
-
-          if (pixel.highlighted) {
-            var clrX = pixel.x * this.TILE_SIZE;
-            var clrY = pixel.y * this.TILE_SIZE;
-
-            this.overlayCtx.clearRect(clrX, clrY, this.TILE_SIZE, this.TILE_SIZE);
-            pixel.highlighted = false;
-          }
-        }
-      }
-    }
+    value: function clearHighlight(ev, currentPixel) {}
   }, {
     key: 'paintPixel',
-    value: function paintPixel(ev) {
-      this.isMouseDown = true;
-
-      var _getTileCoordinates2 = this.getTileCoordinates(ev);
-
-      var x = _getTileCoordinates2.x;
-      var y = _getTileCoordinates2.y;
-
-      var color = '#000000';
-      var pixel = this.grid[x][y];
-
-      var fillX = x * this.TILE_SIZE;
-      var fillY = y * this.TILE_SIZE;
-      this.drawCtx.fillStyle = color;
-      this.drawCtx.fillRect(fillX, fillY, this.TILE_SIZE, this.TILE_SIZE);
-      pixel.color = color;
-    }
+    value: function paintPixel(ev) {}
   }, {
     key: 'setMouseUp',
-    value: function setMouseUp() {
-      this.isMouseDown = false;
-    }
+    value: function setMouseUp() {}
   }]);
 
   return DrawSurface;
@@ -43638,7 +43665,7 @@ var DrawSurface = (function (_TileSurface) {
 exports['default'] = DrawSurface;
 module.exports = exports['default'];
 
-},{"./color_picker":96,"./pixel":99,"./tile_surface":100,"jquery":95}],98:[function(require,module,exports){
+},{"./color_picker":96,"./pixel":103,"./tile_surface":104,"jquery":95}],102:[function(require,module,exports){
 // Spectrum Colorpicker v1.7.0
 // https://github.com/bgrins/spectrum
 // Author: Brian Grinstead
@@ -45863,7 +45890,7 @@ module.exports = exports['default'];
     });
 });
 
-},{}],99:[function(require,module,exports){
+},{}],103:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -45884,7 +45911,7 @@ var Pixel = function Pixel(x, y) {
 exports["default"] = Pixel;
 module.exports = exports["default"];
 
-},{}],100:[function(require,module,exports){
+},{}],104:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -45980,7 +46007,7 @@ var TileSurface = (function () {
 exports["default"] = TileSurface;
 module.exports = exports["default"];
 
-},{"./pixel":99}],101:[function(require,module,exports){
+},{"./pixel":103}],105:[function(require,module,exports){
 'use strict';
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
@@ -45994,6 +46021,8 @@ require('babel/polyfill');
 var $ = require('jquery');
 var angular = require('angular');
 
+require('./directives/draw');
+
 $(function () {
   var app = angular.module('app', [require('angular-ui-router')]);
 
@@ -46002,7 +46031,8 @@ $(function () {
 
     $stateProvider.state('draw', {
       url: '/draw',
-      templateUrl: 'templates/draw.html'
+      templateUrl: 'templates/draw.html',
+      controller: require('./controllers/draw')
     }).state('map', {
       url: '/map',
       templateUrl: 'templates/map.html'
@@ -46011,8 +46041,10 @@ $(function () {
       templateUrl: 'templates/music.html'
     });
   });
-  var drawSurface = new _draw_surface2['default'](document.getElementById('render'));
+
+  require('./controllers');
+  require('./directives');
 });
 
-},{"./draw_surface":97,"angular":3,"angular-ui-router":1,"babel/polyfill":94,"jquery":95}]},{},[101])
+},{"./controllers":98,"./controllers/draw":97,"./directives":100,"./directives/draw":99,"./draw_surface":101,"angular":3,"angular-ui-router":1,"babel/polyfill":94,"jquery":95}]},{},[105])
 

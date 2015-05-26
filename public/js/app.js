@@ -3,6 +3,8 @@ require('babel/polyfill');
 let $ = require('jquery');
 let angular = require('angular');
 
+require('./directives/draw');
+
 import DrawSurface from'./draw_surface';
 
 $(function () {
@@ -14,7 +16,8 @@ $(function () {
     $stateProvider
       .state('draw', {
         url: '/draw',
-        templateUrl: 'templates/draw.html'
+        templateUrl: 'templates/draw.html',
+        controller: require('./controllers/draw')
       })
       .state('map', {
         url: '/map',
@@ -25,5 +28,7 @@ $(function () {
         templateUrl: 'templates/music.html'
       });
   });
-  let drawSurface = new DrawSurface(document.getElementById('render'));
+
+  require('./controllers');
+  require('./directives');
 });
