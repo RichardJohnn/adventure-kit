@@ -1,4 +1,5 @@
 require('babel/polyfill');
+require('core-js');
 
 let $ = require('jquery');
 let React = require('react');

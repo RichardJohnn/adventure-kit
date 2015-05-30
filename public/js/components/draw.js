@@ -5,13 +5,23 @@ import PaletteManager from './palette_manager';
 import ColorPicker from './color_picker';
 import DrawSurface from './draw_surface';
 import ManageDrawList from './manage_draw_list';
+import DrawStore from '../stores/draw_store';
 
 let Draw = React.createClass({
   getInitialState: function () {
-    return {
-      primaryColor: "#000",
-      secondaryColor: "rgba(0, 0, 0, 0)"
-    }
+    return DrawStore.getState();
+  },
+
+  componentDidMount: function () {
+    DrawStore.addChangeListener(this._onChange);
+  },
+
+  componentWillUnmount: function () {
+    DrawStore.removeChangeListener(this._onChange);
+  },
+
+  _onChange: function () {
+    this.setState(DrawStore.getState());
   },
 
   render: function () {
@@ -37,6 +47,8 @@ let Draw = React.createClass({
       </div>
     );
   },
+
+
 
   setPrimaryColor: function (color) {
     console.log('setting primary color ' + color);
