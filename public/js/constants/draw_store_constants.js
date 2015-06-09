@@ -15,7 +15,9 @@ let DrawStoreConstants = keyMirror({
   UPDATE_PALETTE_COLOR: null,
   SAVE_PALETTE: null,
   CLOSE_EDIT: null,
-  SET_ACTIVE_PALETTE: null
+  SET_ACTIVE_PALETTE: null,
+  SET_CONTEXTS: null,
+  SET_GRID: null
 });
 
 export default DrawStoreConstants;

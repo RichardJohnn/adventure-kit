@@ -7,11 +7,6 @@ import DrawStoreConstants from '../constants/draw_store_constants';
 let _state = {
   primaryColor: '#000000',
   secondaryColor: '#ffffff',
-  width: 32,
-  height: 32,
-  totalWidth: 1024,
-  totalHeight: 1024,
-  zoom: 0.875,
   activeTool: 'Pencil',
   palettes: {
     'Rainbow': [
@@ -19,7 +14,17 @@ let _state = {
       '#ff00ff'
     ]
   },
-  activePalette: 'Rainbow'
+  activePalette: 'Rainbow',
+  width: 32,
+  height: 32,
+  totalWidth: 1024,
+  totalHeight: 1024,
+  actualWidth: actualWidth,
+  actualHeight: actualHeight,
+  tileWidth: tileWidth,
+  tileHeight: tileHeight,
+  zoom: 0.875,
+  isMouseDown: false
 };
 
 function loadState(data) {
@@ -122,6 +127,17 @@ let DrawStore = assign(EventEmitter.prototype, {
 
       case DrawStoreConstants.SET_ACTIVE_PALETTE:
         _state.activePalette = action.data
+        break;
+
+      case DrawStoreConstants.SET_CONTEXTS:
+        let contexts = action.data;
+        _state.bgCtx = contexts.bgCtx;
+        _state.drawCtx = contexts.drawCtx;
+        _state.overlayCtx = contexts.overlayCtx;
+        break;
+
+      case DrawStoreConstants.SET_GRID:
+        _state.grid = action.data;
         break;
 
       default:

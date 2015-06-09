@@ -105,6 +105,20 @@ let DrawStoreActions = {
       actionType: DrawStoreConstants.SET_ACTIVE_PALETTE,
       data: data
     });
+  },
+
+  setContexts: function (data) {
+    AppDispatcher.handleAction({
+      actionType: DrawStoreConstants.SET_CONTEXTS,
+      data: data
+    });
+  },
+
+  setGrid: function (data) {
+    AppDispatcher.handleAction({
+      actionType: DrawStoreConstants.SET_GRID,
+      data: data
+    });
   }
 };
 

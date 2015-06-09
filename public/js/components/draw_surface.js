@@ -2,6 +2,7 @@ let React = require('react');
 let $ = require('jquery');
 let tinycolor = require('tinycolor2');
 
+import DrawStoreActions from '../actions/draw_store_actions';
 import ManageDrawList from './manage_draw_list';
 import ResizePrompt from './resize_prompt';
 import Pixel from '../models/pixel';
@@ -10,37 +11,27 @@ import Transparency from '../mixins/transparency';
 let DrawSurface = React.createClass({
   propTypes: {
     primaryColor: React.PropTypes.string.isRequired,
-    secondaryColor: React.PropTypes.string.isRequired
-  },
-
-  getInitialState: function () {
-    let zoom = 0.875;
-    let width = 32;
-    let height = 32;
-    let actualWidth = this.props.totalWidth * zoom;
-    let actualHeight = this.props.totalHeight * zoom;
-    let tileWidth = actualWidth / width;
-    let tileHeight = actualHeight / height;
-
-    return {
-      isMouseDown: false,
-      width: 32,
-      height: 32,
-      zoom: 0.875,
-      actualWidth: actualWidth,
-      actualHeight: actualHeight,
-      tileWidth: tileWidth,
-      tileHeight: tileHeight
-    };
+    secondaryColor: React.PropTypes.string.isRequired,
+    width: React.propTypes.number.isRequired,
+    height: React.propTypes.number.isRequired,
+    totalWidth: React.propTypes.number.isRequired,
+    totalHeight: React.propTypes.number.isRequired,
+    actualWidth: React.propTypes.number.isRequired,
+    actualHeight: React.propTypes.number.isRequired,
+    tileWidth: React.propTypes.number.isRequired,
+    tileHeight: React.propTypes.number.isRequired,
+    bgTileSize: React.propTypes.number.isRequired,
+    zoom: React.propTypes.number.isRequired,
+    minZoom: React.propTypes.number.isRequired,
+    maxZoom: React.propTypes.number.isRequired,
+    isMouseDown: React.propTypes.bool.isRequired
   },
 
   getDefaultProps: function () {
     return {
-      totalWidth: 1024,
-      totalHeight: 1024,
       bgTileSize: 8,
       minZoom: 0.125,
-      maxZoom: 4
+      maxZoom: 8
     };
   },
 
@@ -48,6 +39,12 @@ let DrawSurface = React.createClass({
     let bgCtx = this.refs.bgCanvas.getDOMNode().getContext('2d');
     let drawCtx = this.refs.drawCanvas.getDOMNode().getContext('2d');
     let overlayCtx = this.refs.overlayCanvas.getDOMNode().getContext('2d');
+
+    DrawStoreActions.setContexts({
+      bgCtx: bgCtx,
+      drawCtx: drawCtx,
+      overlayCtx: overlayCtx
+    });
 
     let bgTileSize = this.props.bgTileSize;
     bgCtx.scale(bgTileSize, bgTileSize);
@@ -57,13 +54,7 @@ let DrawSurface = React.createClass({
     drawCtx.scale(tileWidth, tileHeight);
     overlayCtx.scale(tileWidth, tileHeight);
 
-    this.setState({
-      bgCtx: bgCtx,
-      drawCtx: drawCtx,
-      overlayCtx: overlayCtx
-    });
-
-    this.initGrid();
+    DrawStoreActions.createGrid();
   },
 
   componentDidUpdate: function (prevProps, prevState) {
@@ -340,7 +331,7 @@ let DrawSurface = React.createClass({
     }
   },
 
-  initGrid: function () {
+  createGrid: function () {
     let grid = [];
 
     for (let x = 0; x < this.state.width; x++) {
@@ -351,6 +342,7 @@ let DrawSurface = React.createClass({
       }
     }
 
+    DrawStoreActions.setGrid(grid);
     this.setState({ grid: grid });
   },
 

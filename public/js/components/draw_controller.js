@@ -46,7 +46,17 @@ let DrawController = React.createClass({
         </div>
 
         <DrawSurface primaryColor={this.state.primaryColor}
-                     secondaryColor={this.state.secondaryColor}/>
+                     secondaryColor={this.state.secondaryColor}
+                     width={this.state.width}
+                     height={this.state.height}
+                     totalWidth={this.state.totalWidth}
+                     totalHeight={this.state.totalHeight}
+                     actualWidth={this.state.actualWidth}
+                     actualHeight={this.state.actualHeight}
+                     tileWidth={this.state.tileWidth}
+                     tileHeight={this.state.tileHeight}
+                     zoom={this.state.zoom}
+                     isMouseDown={this.state.isMouseDown}/>
       </div>
     );
   },

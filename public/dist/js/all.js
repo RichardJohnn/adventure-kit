@@ -38879,6 +38879,20 @@ var DrawStoreActions = {
       actionType: _constantsDraw_store_constants2['default'].SET_ACTIVE_PALETTE,
       data: data
     });
+  },
+
+  setContexts: function setContexts(data) {
+    _dispatcherApp_dispatcher2['default'].handleAction({
+      actionType: _constantsDraw_store_constants2['default'].SET_CONTEXTS,
+      data: data
+    });
+  },
+
+  setGrid: function setGrid(data) {
+    _dispatcherApp_dispatcher2['default'].handleAction({
+      actionType: _constantsDraw_store_constants2['default'].SET_GRID,
+      data: data
+    });
   }
 };
 
@@ -39012,7 +39026,17 @@ var DrawController = React.createClass({
           secondaryColor: this.state.secondaryColor })
       ),
       React.createElement(_draw_surface2['default'], { primaryColor: this.state.primaryColor,
-        secondaryColor: this.state.secondaryColor })
+        secondaryColor: this.state.secondaryColor,
+        width: this.state.width,
+        height: this.state.height,
+        totalWidth: this.state.totalWidth,
+        totalHeight: this.state.totalHeight,
+        actualWidth: this.state.actualWidth,
+        actualHeight: this.state.actualHeight,
+        tileWidth: this.state.tileWidth,
+        tileHeight: this.state.tileHeight,
+        zoom: this.state.zoom,
+        isMouseDown: this.state.isMouseDown })
     );
   },
 
@@ -39032,6 +39056,10 @@ Object.defineProperty(exports, '__esModule', {
 });
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var _actionsDraw_store_actions = require('../actions/draw_store_actions');
+
+var _actionsDraw_store_actions2 = _interopRequireDefault(_actionsDraw_store_actions);
 
 var _manage_draw_list = require('./manage_draw_list');
 
@@ -39058,37 +39086,27 @@ var DrawSurface = React.createClass({
 
   propTypes: {
     primaryColor: React.PropTypes.string.isRequired,
-    secondaryColor: React.PropTypes.string.isRequired
-  },
-
-  getInitialState: function getInitialState() {
-    var zoom = 0.875;
-    var width = 32;
-    var height = 32;
-    var actualWidth = this.props.totalWidth * zoom;
-    var actualHeight = this.props.totalHeight * zoom;
-    var tileWidth = actualWidth / width;
-    var tileHeight = actualHeight / height;
-
-    return {
-      isMouseDown: false,
-      width: 32,
-      height: 32,
-      zoom: 0.875,
-      actualWidth: actualWidth,
-      actualHeight: actualHeight,
-      tileWidth: tileWidth,
-      tileHeight: tileHeight
-    };
+    secondaryColor: React.PropTypes.string.isRequired,
+    width: React.propTypes.number.isRequired,
+    height: React.propTypes.number.isRequired,
+    totalWidth: React.propTypes.number.isRequired,
+    totalHeight: React.propTypes.number.isRequired,
+    actualWidth: React.propTypes.number.isRequired,
+    actualHeight: React.propTypes.number.isRequired,
+    tileWidth: React.propTypes.number.isRequired,
+    tileHeight: React.propTypes.number.isRequired,
+    bgTileSize: React.propTypes.number.isRequired,
+    zoom: React.propTypes.number.isRequired,
+    minZoom: React.propTypes.number.isRequired,
+    maxZoom: React.propTypes.number.isRequired,
+    isMouseDown: React.propTypes.bool.isRequired
   },
 
   getDefaultProps: function getDefaultProps() {
     return {
-      totalWidth: 1024,
-      totalHeight: 1024,
       bgTileSize: 8,
       minZoom: 0.125,
-      maxZoom: 4
+      maxZoom: 8
     };
   },
 
@@ -39096,6 +39114,12 @@ var DrawSurface = React.createClass({
     var bgCtx = this.refs.bgCanvas.getDOMNode().getContext('2d');
     var drawCtx = this.refs.drawCanvas.getDOMNode().getContext('2d');
     var overlayCtx = this.refs.overlayCanvas.getDOMNode().getContext('2d');
+
+    _actionsDraw_store_actions2['default'].setContexts({
+      bgCtx: bgCtx,
+      drawCtx: drawCtx,
+      overlayCtx: overlayCtx
+    });
 
     var bgTileSize = this.props.bgTileSize;
     bgCtx.scale(bgTileSize, bgTileSize);
@@ -39105,13 +39129,7 @@ var DrawSurface = React.createClass({
     drawCtx.scale(tileWidth, tileHeight);
     overlayCtx.scale(tileWidth, tileHeight);
 
-    this.setState({
-      bgCtx: bgCtx,
-      drawCtx: drawCtx,
-      overlayCtx: overlayCtx
-    });
-
-    this.initGrid();
+    _actionsDraw_store_actions2['default'].createGrid();
   },
 
   componentDidUpdate: function componentDidUpdate(prevProps, prevState) {
@@ -39393,7 +39411,7 @@ var DrawSurface = React.createClass({
     }
   },
 
-  initGrid: function initGrid() {
+  createGrid: function createGrid() {
     var grid = [];
 
     for (var x = 0; x < this.state.width; x++) {
@@ -39404,6 +39422,7 @@ var DrawSurface = React.createClass({
       }
     }
 
+    _actionsDraw_store_actions2['default'].setGrid(grid);
     this.setState({ grid: grid });
   },
 
@@ -39445,7 +39464,7 @@ module.exports = exports['default'];
 
 // TODO: export the actual PNG represented by grid
 
-},{"../mixins/transparency":331,"../models/pixel":332,"./manage_draw_list":322,"./resize_prompt":327,"jquery":99,"react":293,"tinycolor2":309}],314:[function(require,module,exports){
+},{"../actions/draw_store_actions":310,"../mixins/transparency":331,"../models/pixel":332,"./manage_draw_list":322,"./resize_prompt":327,"jquery":99,"react":293,"tinycolor2":309}],314:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -40868,7 +40887,9 @@ var DrawStoreConstants = keyMirror({
   UPDATE_PALETTE_COLOR: null,
   SAVE_PALETTE: null,
   CLOSE_EDIT: null,
-  SET_ACTIVE_PALETTE: null
+  SET_ACTIVE_PALETTE: null,
+  SET_CONTEXTS: null,
+  SET_GRID: null
 });
 
 exports['default'] = DrawStoreConstants;
@@ -40951,16 +40972,21 @@ var assign = require('object-assign');
 var _state = {
   primaryColor: '#000000',
   secondaryColor: '#ffffff',
-  width: 32,
-  height: 32,
-  totalWidth: 1024,
-  totalHeight: 1024,
-  zoom: 0.875,
   activeTool: 'Pencil',
   palettes: {
     'Rainbow': ['#ff0000', '#ffaa00', '#ffff00', '#00ff00', '#0000ff', '#7900ff', '#ff00ff']
   },
-  activePalette: 'Rainbow'
+  activePalette: 'Rainbow',
+  width: 32,
+  height: 32,
+  totalWidth: 1024,
+  totalHeight: 1024,
+  actualWidth: actualWidth,
+  actualHeight: actualHeight,
+  tileWidth: tileWidth,
+  tileHeight: tileHeight,
+  zoom: 0.875,
+  isMouseDown: false
 };
 
 function loadState(data) {
@@ -41063,6 +41089,17 @@ var DrawStore = assign(EventEmitter.prototype, {
 
       case _constantsDraw_store_constants2['default'].SET_ACTIVE_PALETTE:
         _state.activePalette = action.data;
+        break;
+
+      case _constantsDraw_store_constants2['default'].SET_CONTEXTS:
+        var contexts = action.data;
+        _state.bgCtx = contexts.bgCtx;
+        _state.drawCtx = contexts.drawCtx;
+        _state.overlayCtx = contexts.overlayCtx;
+        break;
+
+      case _constantsDraw_store_constants2['default'].SET_GRID:
+        _state.grid = action.data;
         break;
 
       default:
