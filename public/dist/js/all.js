@@ -39144,7 +39144,7 @@ var DrawSurface = React.createClass({
     secondaryColor: React.PropTypes.string.isRequired,
     width: React.PropTypes.number.isRequired,
     height: React.PropTypes.number.isRequired,
-    grid: React.PropTypes.array.isRequired,
+    grid: React.PropTypes.array,
     totalWidth: React.PropTypes.number.isRequired,
     totalHeight: React.PropTypes.number.isRequired,
     actualWidth: React.PropTypes.number.isRequired,
@@ -39248,27 +39248,26 @@ var DrawSurface = React.createClass({
   },
 
   redraw: function redraw() {
+    this.rescale();
+    this.drawBackground();
+
     var bgCtx = this.props.bgCtx;
     var drawCtx = this.props.drawCtx;
     var overlayCtx = this.props.overlayCtx;
     var zoom = this.props.zoom;
     var grid = this.props.grid;
 
-    this.rescale(function () {
-      this.drawBackground(function () {
-        drawCtx.clearRect(0, 0, this.props.width, this.props.height);
+    drawCtx.clearRect(0, 0, this.props.width, this.props.height);
 
-        for (var x = 0; x < this.props.width; x++) {
-          for (var y = 0; y < this.props.height; y++) {
-            var pixel = grid[x][y];
-            if (pixel.color) {
-              drawCtx.fillStyle = pixel.color;
-              drawCtx.fillRect(x, y, 1, 1);
-            }
-          }
+    for (var x = 0; x < this.props.width; x++) {
+      for (var y = 0; y < this.props.height; y++) {
+        var pixel = grid[x][y];
+        if (pixel.color) {
+          drawCtx.fillStyle = pixel.color;
+          drawCtx.fillRect(x, y, 1, 1);
         }
-      });
-    });
+      }
+    }
   },
 
   highlightPixel: function highlightPixel(ev) {
@@ -39401,7 +39400,7 @@ var DrawSurface = React.createClass({
     _actionsDraw_store_actions2['default'].rescale();
   },
 
-  drawBackground: function drawBackground(callback) {
+  drawBackground: function drawBackground() {
     var bgCtx = this.props.bgCtx;
     var bgTileSize = this.props.bgTileSize;
     var numTilesH = this.props.actualWidth / bgTileSize;

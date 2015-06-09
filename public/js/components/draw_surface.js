@@ -14,7 +14,7 @@ let DrawSurface = React.createClass({
     secondaryColor: React.PropTypes.string.isRequired,
     width: React.PropTypes.number.isRequired,
     height: React.PropTypes.number.isRequired,
-    grid: React.PropTypes.array.isRequired,
+    grid: React.PropTypes.array,
     totalWidth: React.PropTypes.number.isRequired,
     totalHeight: React.PropTypes.number.isRequired,
     actualWidth: React.PropTypes.number.isRequired,
@@ -119,29 +119,26 @@ let DrawSurface = React.createClass({
   },
 
   redraw: function () {
+    this.rescale();
+    this.drawBackground();
+
     let bgCtx = this.props.bgCtx;
     let drawCtx = this.props.drawCtx;
     let overlayCtx = this.props.overlayCtx;
     let zoom = this.props.zoom;
     let grid = this.props.grid;
 
-    this.rescale(function () {
-      this.drawBackground(function () {
-        drawCtx.clearRect(0, 0, this.props.width, this.props.height);
+    drawCtx.clearRect(0, 0, this.props.width, this.props.height);
 
-        for (let x = 0; x < this.props.width; x++) {
-          for (let y = 0; y < this.props.height; y++) {
-            let pixel = grid[x][y];
-            if (pixel.color) {
-              drawCtx.fillStyle = pixel.color;
-              drawCtx.fillRect(x, y, 1, 1);
-            }
-          }
+    for (let x = 0; x < this.props.width; x++) {
+      for (let y = 0; y < this.props.height; y++) {
+        let pixel = grid[x][y];
+        if (pixel.color) {
+          drawCtx.fillStyle = pixel.color;
+          drawCtx.fillRect(x, y, 1, 1);
         }
-      });
-
-    });
-
+      }
+    }
   },
 
   highlightPixel: function (ev) {
@@ -268,7 +265,7 @@ let DrawSurface = React.createClass({
     DrawStoreActions.rescale();
   },
 
-  drawBackground: function (callback) {
+  drawBackground: function () {
     let bgCtx = this.props.bgCtx;
     let bgTileSize = this.props.bgTileSize;
     let numTilesH = this.props.actualWidth / bgTileSize;
