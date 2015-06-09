@@ -4,6 +4,16 @@ let assign = require('object-assign');
 import AppDispatcher from '../dispatcher/app_dispatcher';
 import DrawStoreConstants from '../constants/draw_store_constants';
 
+let width = 32;
+let height = 32;
+let totalWidth = 1024;
+let totalHeight = 1024;
+let zoom = 0.875;
+let actualWidth = totalWidth * zoom;
+let actualHeight = totalHeight * zoom;
+let tileWidth = actualWidth / width;
+let tileHeight = actualHeight / height;
+
 let _state = {
   primaryColor: '#000000',
   secondaryColor: '#ffffff',
@@ -15,15 +25,15 @@ let _state = {
     ]
   },
   activePalette: 'Rainbow',
-  width: 32,
-  height: 32,
-  totalWidth: 1024,
-  totalHeight: 1024,
+  width: width,
+  height: height,
+  totalWidth: totalWidth,
+  totalHeight: totalHeight,
   actualWidth: actualWidth,
   actualHeight: actualHeight,
   tileWidth: tileWidth,
   tileHeight: tileHeight,
-  zoom: 0.875,
+  zoom: zoom,
   isMouseDown: false
 };
 
@@ -130,14 +140,47 @@ let DrawStore = assign(EventEmitter.prototype, {
         break;
 
       case DrawStoreConstants.SET_CONTEXTS:
-        let contexts = action.data;
-        _state.bgCtx = contexts.bgCtx;
-        _state.drawCtx = contexts.drawCtx;
-        _state.overlayCtx = contexts.overlayCtx;
+        let names = ['bgCtx', 'drawCtx', 'overlayCtx'];
+        for (let i = 0; i < names.length; i++) {
+          let name = names[i];
+          if (action.data.hasOwnProperty(name)) {
+            _state[name] = action.data[name];
+          }
+        }
         break;
 
       case DrawStoreConstants.SET_GRID:
         _state.grid = action.data;
+        break;
+
+      case DrawStoreConstants.SET_MOUSE_DOWN:
+        _state.isMouseDown = action.data;
+        break;
+
+      case DrawStoreConstants.SET_ZOOM:
+        _state.zoom = action.data;
+        break;
+
+      case DrawStoreConstants.SET_SIZE:
+        _state.width = action.data.width;
+        _state.height = action.data.height;
+        break;
+
+      case DrawStoreConstants.RESIZE:
+        _state.actualWidth = _state.totalWidth * _state.zoom;
+        _state.actualHeight = _state.totalHeight * _state.zoom;
+        _state.tileWidth = _state.actualWidth / _state.width;
+        _state.tileHeight = _state.actualHeight / _state.height;
+        break;
+
+      case DrawStoreConstants.RESCALE:
+        let bgScale = _state.bgTileSize;
+        let scaleWidth = _state.tileWidth;
+        let scaleHeight = _state.tileHeight;
+
+        _state.bgCtx.scale(bgScale, bgScale);
+        _state.drawCtx.scale(scaleWidth, scaleHeight);
+        _state.overlayCtx.scale(scaleWidth, scaleHeight);
         break;
 
       default:

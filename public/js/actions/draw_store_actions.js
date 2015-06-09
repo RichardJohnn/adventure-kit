@@ -119,7 +119,42 @@ let DrawStoreActions = {
       actionType: DrawStoreConstants.SET_GRID,
       data: data
     });
-  }
+  },
+
+  setMouseDown: function (data) {
+    AppDispatcher.handleAction({
+      actionType: DrawStoreConstants.SET_MOUSE_DOWN,
+      data: data
+    });
+  },
+
+  setZoom: function (data) {
+    AppDispatcher.handleAction({
+      actionType: DrawStoreConstants.SET_ZOOM,
+      data: data
+    });
+  },
+
+  setSize: function (data) {
+    AppDispatcher.handleAction({
+      actionType: DrawStoreConstants.RESIZE,
+      data: data
+    });
+  },
+
+  resize: function (data) {
+    AppDispatcher.handleAction({
+      actionType: DrawStoreConstants.RESIZE,
+      data: data
+    });
+  },
+
+  rescale: function (data) {
+    AppDispatcher.handleAction({
+      actionType: DrawStoreConstants.RESCALE,
+      data: data
+    });
+  },
 };
 
 export default DrawStoreActions;

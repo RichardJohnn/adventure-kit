@@ -17,7 +17,12 @@ let DrawStoreConstants = keyMirror({
   CLOSE_EDIT: null,
   SET_ACTIVE_PALETTE: null,
   SET_CONTEXTS: null,
-  SET_GRID: null
+  SET_GRID: null,
+  SET_MOUSE_DOWN: null,
+  SET_ZOOM: null,
+  SET_SIZE: null,
+  RESIZE: null,
+  RESCALE: null
 });
 
 export default DrawStoreConstants;

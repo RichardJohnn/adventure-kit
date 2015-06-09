@@ -1,5 +1,7 @@
 let React = require('react');
 
+import DrawStoreActions from '../actions/draw_store_actions';
+import Pixel from '../models/pixel';
 import DrawStore from '../stores/draw_store';
 import DrawToolList from './draw_tool_list';
 import PaletteManager from './palette_manager';
@@ -17,6 +19,7 @@ let DrawController = React.createClass({
 
   componentDidMount: function () {
     DrawStore.addChangeListener(this._onChange);
+    this.createGrid();
   },
 
   componentWillUnmount: function () {
@@ -24,11 +27,6 @@ let DrawController = React.createClass({
   },
 
   render: function () {
-    let actualWidth = this.state.totalWidth * this.state.zoom;
-    let actualHeight = this.state.totalHeight * this.state.zoom;
-    let tileWidth = actualWidth / this.state.width;
-    let tileHeight = actualHeight / this.state.height;
-
     return (
       <div id="draw">
         <div className="toolbar">
@@ -49,6 +47,10 @@ let DrawController = React.createClass({
                      secondaryColor={this.state.secondaryColor}
                      width={this.state.width}
                      height={this.state.height}
+                     grid={this.state.grid}
+                     bgCtx={this.state.bgCtx}
+                     drawCtx={this.state.drawCtx}
+                     overlayCtx={this.state.overlayCtx}
                      totalWidth={this.state.totalWidth}
                      totalHeight={this.state.totalHeight}
                      actualWidth={this.state.actualWidth}
@@ -63,7 +65,21 @@ let DrawController = React.createClass({
 
   _onChange: function () {
     this.setState(getAppState());
-  }
+  },
+
+  createGrid: function () {
+    let grid = [];
+
+    for (let x = 0; x < this.state.width; x++) {
+      grid[x] = [];
+
+      for (let y = 0; y < this.state.height; y++) {
+        grid[x].push(new Pixel(x, y));
+      }
+    }
+
+    DrawStoreActions.setGrid(grid);
+  },
 });
 
 export default DrawController;
