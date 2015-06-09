@@ -54,7 +54,7 @@ let DrawSurface = React.createClass({
     drawCtx.scale(tileWidth, tileHeight);
     overlayCtx.scale(tileWidth, tileHeight);
 
-    DrawStoreActions.createGrid();
+    this.createGrid();
   },
 
   componentDidUpdate: function (prevProps, prevState) {
