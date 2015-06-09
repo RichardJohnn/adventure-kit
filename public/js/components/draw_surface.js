@@ -2,6 +2,7 @@ let React = require('react');
 let $ = require('jquery');
 let PNG = require('pngjs').PNG;
 let tinycolor = require('tinycolor2');
+let PIXI = require('pixi.js');
 
 import ManageDrawList from './manage_draw_list';
 import ResizePrompt from './resize_prompt';
@@ -47,32 +48,43 @@ let DrawSurface = React.createClass({
   },
 
   componentDidMount: function () {
-    let bgCtx = this.refs.bgCanvas.getDOMNode().getContext('2d');
-    let drawCtx = this.refs.drawCanvas.getDOMNode().getContext('2d');
-    let overlayCtx = this.refs.overlayCanvas.getDOMNode().getContext('2d');
+    let interactive = true;
+    let stage = new PIXI.Stage(0xebebeb, interactive);
+    let renderer = PIXI.autoDetectRenderer(this.props.totalWidth,
+                                           this.props.totalHeight);
+    this.getDOMNode().querySelector('.surface').appendChild(renderer.view);
+
+    let bgGfx = new PIXI.Graphics();
+    let drawGfx = new PIXI.Graphics();
+    let overlayGfx = new PIXI.Graphics();
+
+    stage.addChild(bgGfx);
+    stage.addChild(drawGfx);
+    stage.addChild(overlayGfx);
 
     let bgTileSize = this.props.bgTileSize;
-    bgCtx.scale(bgTileSize, bgTileSize);
+    bgGfx.scale = bgTileSize;
 
     let tileWidth = this.state.tileWidth;
-    let tileHeight = this.state.tileHeight;
-    drawCtx.scale(tileWidth, tileHeight);
-    overlayCtx.scale(tileWidth, tileHeight);
+    drawGfx.scale = tileWidth;
+    overlayGfx.scale = tileWidth;
 
     this.setState({
-      bgCtx: bgCtx,
-      drawCtx: drawCtx,
-      overlayCtx: overlayCtx
+      stage: stage,
+      renderer: renderer,
+      bgGfx: bgGfx,
+      drawGfx: drawGfx,
+      overlayGfx: overlayGfx
     });
 
     this.initGrid();
   },
 
   componentDidUpdate: function (prevProps, prevState) {
-    if (this.state.bgCtx &&
-        this.state.bgCtx !== prevState.bgCtx &&
-        !prevState.bgCtx) {
-      this.renderCanvas();
+    if (this.state.bgGfx &&
+        this.state.bgGfx !== prevState.bgGfx &&
+        !prevState.bgGfx) {
+      requestAnimationFrame(this.animate);
     }
   },
 
@@ -98,24 +110,6 @@ let DrawSurface = React.createClass({
                  onContextMenu={this.drawPixel}
                  onMouseUp={this.setMouseUp}
                  onWheel={this.onZoom}>
-              <canvas id="bg-canvas"
-                      className="draw"
-                      ref="bgCanvas"
-                      width={this.state.actualWidth}
-                      height={this.state.actualHeight}>
-              </canvas>
-              <canvas id="draw-canvas"
-                      className="draw"
-                      ref="drawCanvas"
-                      width={this.state.actualWidth}
-                      height={this.state.actualHeight}>
-              </canvas>
-              <canvas id="overlay-canvas"
-                      className="draw"
-                      ref="overlayCanvas"
-                      width={this.state.actualWidth}
-                      height={this.state.actualHeight}>
-              </canvas>
             </div>
           </div>
         </div>
@@ -128,10 +122,12 @@ let DrawSurface = React.createClass({
     );
   },
 
-  renderCanvas: function () {
-    let bgCtx = this.state.bgCtx;
-    let drawCtx = this.state.drawCtx;
-    let overlayCtx = this.state.overlayCtx;
+  animate: function () {
+    requestAnimationFrame(this.animate);
+
+    let bgGfx = this.state.bgGfx;
+    let drawGfx = this.state.drawGfx;
+    let overlayGfx = this.state.overlayGfx;
 
     let zoom = this.state.zoom;
     let actualWidth = this.props.totalWidth * zoom;
@@ -146,55 +142,53 @@ let DrawSurface = React.createClass({
       tileHeight: tileHeight
     });
 
-    this.rescale(function () {
-      this.drawBackground(function () {
-        let grid = this.state.grid;
+    this.rescale();
+    this.drawBackground();
+    let grid = this.state.grid;
 
-        drawCtx.clearRect(0, 0, this.state.width, this.state.height);
+    drawGfx.beginFill(0x000000, 0);
+    drawGfx.drawRect(0, 0, this.state.width, this.state.height);
 
-        for (let x = 0; x < this.state.width; x++) {
-          for (let y = 0; y < this.state.height; y++) {
-            let pixel = grid[x][y];
+    for (let x = 0; x < this.state.width; x++) {
+      for (let y = 0; y < this.state.height; y++) {
+        let pixel = grid[x][y];
 
-            if (pixel.color) {
-              drawCtx.fillStyle = pixel.color;
-              drawCtx.fillRect(x, y, 1, 1);
-            }
-
-            if (pixel.highlighted) {
-              overlayCtx.fillStyle = '#eeeeee';
-              overlayCtx.fillRect(x, y, 1, 1);
-            }
-          }
+        if (pixel.color) {
+          drawGfx.beginFill(pixel.color);
+          drawGfx.drawRect(x, y, 1, 1);
         }
 
-        this.setState({
-          bgCtx: bgCtx,
-          drawCtx: drawCtx,
-          overlayCtx: overlayCtx
-        });
-      });
+        if (pixel.highlighted) {
+          overlayGfx.beginFill(0xffffff, 0.2);
+          overlayGfx.drawRect(x, y, 1, 1);
+        }
+      }
+    }
+
+    this.state.renderer.render(this.state.stage);
+
+    this.setState({
+      bgGfx: bgGfx,
+      drawGfx: drawGfx,
+      overlayGfx: overlayGfx
     });
-
-
   },
 
   rescale: function (callback) {
-    let bgCtx = this.state.bgCtx;
-    let drawCtx = this.state.drawCtx;
-    let overlayCtx = this.state.overlayCtx;
+    let bgGfx = this.state.bgGfx;
+    let drawGfx = this.state.drawGfx;
+    let overlayGfx = this.state.overlayGfx;
     let bgScale = this.props.bgTileSize;
     let tileWidth = this.state.tileWidth;
-    let tileHeight = this.state.tileHeight;
 
-    bgCtx.scale(bgScale, bgScale);
-    drawCtx.scale(tileWidth, tileHeight);
-    overlayCtx.scale(tileWidth, tileHeight);
+    bgGfx.scale = bgScale;
+    drawGfx.scale = tileWidth;
+    overlayGfx.scale = tileWidth;
 
     this.setState({
-      bgCtx: bgCtx,
-      drawCtx: drawCtx,
-      overlayCtx: overlayCtx
+      bgGfx: bgGfx,
+      drawGfx: drawGfx,
+      overlayGfx: overlayGfx
     }, callback);
   },
 
@@ -206,8 +200,6 @@ let DrawSurface = React.createClass({
       grid[x][y].highlighted = true;
       this.setState({
         grid: grid
-      }, function () {
-        this.renderCanvas();
       })
     }
 
@@ -231,8 +223,6 @@ let DrawSurface = React.createClass({
 
     this.setState({
       grid: grid
-    }, function () {
-      this.renderCanvas()
     });
   },
 
@@ -251,8 +241,6 @@ let DrawSurface = React.createClass({
     this.setState({
       grid: grid,
       isMouseDown: true
-    }, function () {
-      this.renderCanvas();
     });
   },
 
@@ -295,8 +283,6 @@ let DrawSurface = React.createClass({
 
     this.setState({
       zoom: zoom
-    }, function () {
-      this.renderCanvas();
     });
   },
 
@@ -312,9 +298,7 @@ let DrawSurface = React.createClass({
       width: width,
       height: height
     }, function () {
-      this.updateGrid(function () {
-        this.renderCanvas();
-      });
+      this.updateGrid();
     });
   },
 
@@ -323,21 +307,21 @@ let DrawSurface = React.createClass({
   },
 
   drawBackground: function (callback) {
-    let bgCtx = this.state.bgCtx;
+    let bgGfx = this.state.bgGfx;
     let bgTileSize = this.props.bgTileSize;
     let numTilesH = this.state.actualWidth / bgTileSize;
     let numTilesV = this.state.actualHeight / bgTileSize;
 
     for (let x = 0; x < numTilesH; x++) {
       for (let y = 0; y < numTilesV; y++) {
-        let fill = ((x + y) % 2 == 0) ? "#999" : "#777";
+        let fill = ((x + y) % 2 == 0) ? 0x999999 : 0x777777;
 
-        bgCtx.fillStyle = fill;
-        bgCtx.fillRect(x, y, 1, 1);
+        bgGfx.beginFill(fill);
+        bgGfx.drawRect(x, y, 1, 1);
       }
     }
 
-    this.setState({ bgCtx: bgCtx }, callback);
+    this.setState({ bgGfx: bgGfx }, callback);
   },
 
   initGrid: function () {
