@@ -45,14 +45,21 @@ let Track = React.createClass({
     this.getDOMNode().appendChild(renderer.view);
 
     let stage = new PIXI.Container();
-    let gfx = new PIXI.Graphics();
-    stage.addChild(gfx);
+    let bgGfx = new PIXI.Graphics();
+    let gfx1 = new PIXI.Graphics();
+    let gfx2 = new PIXI.Graphics();
+    stage.addChild(bgGfx);
+    stage.addChild(gfx1);
+    stage.addChild(gfx2);
 
     this.setState({
       renderer,
-      stage
+      stage,
+      bgGfx,
+      gfx1,
+      gfx2
     }, function () {
-      this.drawMeasureMarkers(gfx);
+      this.drawMeasureMarkers(bgGfx);
       renderer.render(stage);
       requestAnimationFrame(this.draw);
     });
@@ -89,34 +96,33 @@ let Track = React.createClass({
   draw: function () {
     let renderer = this.state.renderer;
     let stage = this.state.stage;
+    let gfx1 = this.state.gfx1;
+    let gfx2 = this.state.gfx2;
     let data = this.props.data;
-    let gfx = stage.getChildAt(0);
 
     if (!data || !data.length) {
       return;
     }
 
-    stage.removeChild(gfx);
-    gfx = new PIXI.Graphics();
 
     let [startBound, endBound] = this.getTrackBounds();
+    gfx1.position.x -= 0.01;
+    gfx2.position.x = gfx1.position.x + gfx1.width;
 
-    gfx.clear();
-    this.drawMeasureMarkers(gfx);
-    gfx.beginFill(0xffcc00);
-
-    let lastIdx = data.length - 1;
-    for (let i = lastIdx; i >= 0; i--) {
-      let note = data[i];
-      let { x, y, width, height } = this.getNoteBounds(note, startBound, endBound);
-      if (note.endTime < startBound) {
-        break;
-      }
-
-      gfx.drawRect(x, y, width, height);
+    if (gfx1.position.x < -gfx1.position.width) {
+      gfx1.position.x = 0;
+      gfx2.position.x = gfx1.width;
     }
 
-    stage.addChild(gfx);
+
+
+    let lastIdx = data.length - 1;
+    let note = data[lastIdx];
+    let { x, y, width, height } = this.getNoteBounds(note, startBound, endBound);
+    gfx1.beginFill(0xffcc00);
+    gfx1.drawRect(x, y, width, height);
+
+
     renderer.render(stage);
     requestAnimationFrame(this.draw);
   },

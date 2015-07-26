@@ -83036,14 +83036,21 @@ var Track = React.createClass({
     this.getDOMNode().appendChild(renderer.view);
 
     var stage = new PIXI.Container();
-    var gfx = new PIXI.Graphics();
-    stage.addChild(gfx);
+    var bgGfx = new PIXI.Graphics();
+    var gfx1 = new PIXI.Graphics();
+    var gfx2 = new PIXI.Graphics();
+    stage.addChild(bgGfx);
+    stage.addChild(gfx1);
+    stage.addChild(gfx2);
 
     this.setState({
       renderer: renderer,
-      stage: stage
+      stage: stage,
+      bgGfx: bgGfx,
+      gfx1: gfx1,
+      gfx2: gfx2
     }, function () {
-      this.drawMeasureMarkers(gfx);
+      this.drawMeasureMarkers(bgGfx);
       renderer.render(stage);
       requestAnimationFrame(this.draw);
     });
@@ -83080,15 +83087,13 @@ var Track = React.createClass({
   draw: function draw() {
     var renderer = this.state.renderer;
     var stage = this.state.stage;
+    var gfx1 = this.state.gfx1;
+    var gfx2 = this.state.gfx2;
     var data = this.props.data;
-    var gfx = stage.getChildAt(0);
 
     if (!data || !data.length) {
       return;
     }
-
-    stage.removeChild(gfx);
-    gfx = new PIXI.Graphics();
 
     var _getTrackBounds = this.getTrackBounds();
 
@@ -83097,29 +83102,27 @@ var Track = React.createClass({
     var startBound = _getTrackBounds2[0];
     var endBound = _getTrackBounds2[1];
 
-    gfx.clear();
-    this.drawMeasureMarkers(gfx);
-    gfx.beginFill(16763904);
+    gfx1.position.x -= 0.01;
+    gfx2.position.x = gfx1.position.x + gfx1.width;
 
-    var lastIdx = data.length - 1;
-    for (var i = lastIdx; i >= 0; i--) {
-      var note = data[i];
-
-      var _getNoteBounds = this.getNoteBounds(note, startBound, endBound);
-
-      var x = _getNoteBounds.x;
-      var y = _getNoteBounds.y;
-      var width = _getNoteBounds.width;
-      var height = _getNoteBounds.height;
-
-      if (note.endTime < startBound) {
-        break;
-      }
-
-      gfx.drawRect(x, y, width, height);
+    if (gfx1.position.x < -gfx1.position.width) {
+      gfx1.position.x = 0;
+      gfx2.position.x = gfx1.width;
     }
 
-    stage.addChild(gfx);
+    var lastIdx = data.length - 1;
+    var note = data[lastIdx];
+
+    var _getNoteBounds = this.getNoteBounds(note, startBound, endBound);
+
+    var x = _getNoteBounds.x;
+    var y = _getNoteBounds.y;
+    var width = _getNoteBounds.width;
+    var height = _getNoteBounds.height;
+
+    gfx1.beginFill(16763904);
+    gfx1.drawRect(x, y, width, height);
+
     renderer.render(stage);
     requestAnimationFrame(this.draw);
   },
