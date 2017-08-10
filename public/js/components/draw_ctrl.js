@@ -5,6 +5,7 @@ import DrawToolList from './draw_tool_list';
 import PaletteManager from './palette_manager';
 import DrawSurface from './draw_surface';
 import SpriteManager from './sprite_manager';
+import ExportDrawing from './draw_export';
 
 let DrawCtrl = React.createClass({
   getInitialState: function () {
@@ -53,6 +54,7 @@ let DrawCtrl = React.createClass({
 
         <SpriteManager sprites={this.state.sprites}
                        activeSprite={this.state.activeSprite}/>
+        <ExportDrawing grid={this.state.grid}/>
       </div>
     );
   }

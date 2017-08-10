@@ -42,6 +42,10 @@
   border: 3px solid goldenrod;
 }
 
+#draw .export-button {
+  height: 44px;
+}
+
 #render {
   position: relative;
   align-self: flex-end;
