@@ -8,17 +8,18 @@ let ExportDrawing = React.createClass({
   render: function() {
     let grid = this.props.grid;
     return (
-      <button className="export-button"
+      <a id="download" className="export-button"
               onClick={this.exportDrawing.bind(this, grid)}>
       Export to PNG
-      </button>
+      </a>
     );
 
   },
 
   exportDrawing: function (grid) {
-    this.postAjax('/api/v1/draw/png', grid, function(data){ console.log(data)});
-
+    var link = document.getElementById('download');
+    link.href = document.getElementsByTagName('canvas')[0].toDataURL();
+    link.download = 'export.png';
   },
 
   postAjax: function (url, data, success) {
