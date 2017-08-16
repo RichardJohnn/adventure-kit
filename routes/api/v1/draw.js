@@ -4,8 +4,12 @@ var fs = require('fs');
 var PNG = require('pngjs').PNG;
 var tinycolor = require('tinycolor2');
 
+router.get('/png', function (req, res) {
+  console.log(req);
+})
+
 router.post('/png', function (req, res) {
-  var grid = req.params.grid;
+  var grid = JSON.parse(Object.keys(req.body))
   var png = new PNG({
     width: grid.length,
     height: grid[0].length
@@ -28,8 +32,16 @@ router.post('/png', function (req, res) {
       png.data[idx+3] = alpha;
     }
   }
-  console.log(grid);
-  res.sendFile(png.pack());
+  debugger
+
+  var img = new Buffer(png.pack().data);
+
+  res.writeHead(200, {
+    'Content-Type': 'image/png',
+    'Content-disposition': 'attachment;filename=' + 'export.png',
+    'Content-Length': img.length
+  });
+  res.end(img, 'binary');
 });
 
 exports = module.exports = router;
